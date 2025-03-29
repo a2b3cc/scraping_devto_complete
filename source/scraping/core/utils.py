@@ -1,6 +1,7 @@
 # source/scraping/core/utils.py
 
 import re
+from datetime import datetime
 
 
 def extract_article_metadata(article):
@@ -20,9 +21,22 @@ def extract_article_metadata(article):
     if href and href.startswith("/"):
         href = "https://dev.to" + href
 
-
+    # Publication date
+    time_el = article.query_selector("a.crayons-story__tertiary time")
+    raw_date = time_el.inner_text().strip() if time_el else None
+    date = None
+    if raw_date:
+        # Previous year date format ("Jul 1 '24")
+        if "'" in raw_date:
+            date = datetime.strptime(raw_date.replace("'", ""),
+                                     "%b %d %y").strftime("%Y-%m-%d")
+        # Current year date format ("Mar 18")
+        else:
+            date = datetime.strptime(f"{raw_date} {datetime.now().year}",
+                                     "%b %d %Y").strftime("%Y-%m-%d")
 
     return {
+        "date": date,
         "title": title,
         "href": href
     }
