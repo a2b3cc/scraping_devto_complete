@@ -1,0 +1,12 @@
+beautifulsoup4==4.13.3
+greenlet==3.1.1
+numpy==2.0.2
+pandas==2.2.3
+playwright==1.51.0
+pyee==12.1.1
+python-dateutil==2.9.0.post0
+pytz==2025.2
+six==1.17.0
+soupsieve==2.6
+typing_extensions==4.13.0
+tzdata==2025.2
