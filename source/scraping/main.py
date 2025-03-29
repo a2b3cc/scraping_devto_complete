@@ -11,7 +11,7 @@ def main():
     df_list = []
     for topic in TOPICS:
         for trending_period in TRENDING_PERIODS:
-            df_topic = scrape_top_articles(topic, trending_period, 1)
+            df_topic = scrape_top_articles(topic, trending_period, 6)
             df_list.append(df_topic)
 
     # Concatenate all the dataframes

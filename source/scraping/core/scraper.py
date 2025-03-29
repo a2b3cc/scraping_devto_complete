@@ -19,6 +19,7 @@ def scrape_top_articles(topic="all", trending_period="week", top_n=10):
 
     Returns:
         pd.DataFrame: A DataFrame containing the scraped data with columns including:
+                          - 'date': publication date of the article.
                           - 'title': article title.
                           - 'href': URL of the article.
     """
