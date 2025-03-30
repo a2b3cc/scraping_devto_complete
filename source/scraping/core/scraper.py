@@ -23,6 +23,7 @@ def scrape_top_articles(topic="all", trending_period="week", top_n=10):
                           - 'title': article title.
                           - 'href': URL of the article.
                           - 'read_time': estimated reading time (in minutes) for the article.
+                          - 'tags': list of associated topic tags.
     """
 
     url = BASE_URL

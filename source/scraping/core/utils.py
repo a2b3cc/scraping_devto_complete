@@ -38,9 +38,14 @@ def extract_article_metadata(article):
     read_time_el = article.query_selector("div.crayons-story__save small.crayons-story__tertiary")
     read_time = int(read_time_el.inner_text().strip().split()[0]) if read_time_el else -1
 
+    # Tags
+    tag_el = article.query_selector_all("div.crayons-story__tags a")
+    tags = [tag.inner_text().strip()[2:] for tag in tag_el] if tag_el else []
+
     return {
         "date": date,
         "title": title,
         "href": href,
-        "read_time": read_time
+        "read_time": read_time,
+        "tags": tags
     }
