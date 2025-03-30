@@ -12,7 +12,7 @@
 ```sh 
   git clone git@github.com:{user}/{repo}.git
 ```
-### 2. Sync with _main_ branch
+### 2. Sync with <code>main</code> branch
 
 ```sh 
   git checkout main
@@ -62,14 +62,14 @@
    - Merge branch after review approval.
 
 ## After merge
-#### Sync local main branch with remote
+#### Sync local <code>main</code> branch with remote
 ```sh 
   git checkout main
 ```
 ```sh
   git pull origin main
 ```
-#### Optional cleanup: delete local merged feature branch
+#### Optional cleanup: delete local merged branch
 ```sh
   git branch -d feature/feature_name
 ```
