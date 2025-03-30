@@ -34,9 +34,13 @@ def extract_article_metadata(article):
         else:
             date = datetime.strptime(f"{raw_date} {datetime.now().year}",
                                      "%b %d %Y").strftime("%Y-%m-%d")
+    # Time to read (-1 if not found)
+    read_time_el = article.query_selector("div.crayons-story__save small.crayons-story__tertiary")
+    read_time = int(read_time_el.inner_text().strip().split()[0]) if read_time_el else -1
 
     return {
         "date": date,
         "title": title,
-        "href": href
+        "href": href,
+        "read_time": read_time
     }
