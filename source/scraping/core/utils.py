@@ -42,10 +42,17 @@ def extract_article_metadata(article):
     tag_el = article.query_selector_all("div.crayons-story__tags a")
     tags = [tag.inner_text().strip()[2:] for tag in tag_el] if tag_el else []
 
+    # Comment count
+    comments_el = article.query_selector("a[href*='#comments']")
+    comments_text = comments_el.inner_text().strip() if comments_el else "0"
+    match = re.search(r'\d+', comments_text)
+    comments_count = int(match.group()) if match else 0
+
     return {
         "date": date,
         "title": title,
         "href": href,
         "read_time": read_time,
-        "tags": tags
+        "tags": tags,
+        "comments_count": comments_count
     }
