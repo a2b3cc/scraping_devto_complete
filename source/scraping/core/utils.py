@@ -48,11 +48,17 @@ def extract_article_metadata(article):
     match = re.search(r'\d+', comments_text)
     comments_count = int(match.group()) if match else 0
 
+    # Reactions count
+    reactions_el = article.query_selector(
+        "div.multiple_reactions_aggregate span.aggregate_reactions_counter")
+    reaction_count = int(reactions_el.inner_text().strip().split()[0]) if reactions_el else 0    
+
     return {
         "date": date,
         "title": title,
         "href": href,
         "read_time": read_time,
         "tags": tags,
-        "comments_count": comments_count
+        "comments_count": comments_count,
+        "reaction_count": reaction_count
     }
