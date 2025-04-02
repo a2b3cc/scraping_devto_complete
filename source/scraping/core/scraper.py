@@ -3,11 +3,11 @@
 from playwright.sync_api import sync_playwright
 import pandas as pd
 import random
-from .config import BASE_URL
-from .utils import extract_article_metadata
+from .config import BASE_URL, USER_AGENTS
+from .utils import extract_article_metadata, scrape_comments
 
 
-def scrape_top_articles(topic="all", trending_period="week", top_n=10):
+def scrape_top_articles(topic="all", trending_period="week", top_n=10,  rotate_every=20):
     """
     Scrapes the most popular DEV.to articles based on a specified topic and trending period.
 
@@ -16,15 +16,13 @@ def scrape_top_articles(topic="all", trending_period="week", top_n=10):
         trending_period (str): the time interval for which articles are trending.
             Accepted values are "year", "month", "week", or "day".
         top_n (int): the total number of top articles to scrape.
+        rotate_every (int): the number of articles processed before rotating the user agent,
+            to mimic human behavior and reduce the risk of being blocked.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the scraped data with columns including:
-                          - 'date': publication date of the article.
-                          - 'title': article title.
-                          - 'href': URL of the article.
-                          - 'read_time': estimated reading time (in minutes) for the article.
-                          - 'tags': list of associated topic tags.
-                          - 'comments_count': number of comments on the article.
+        pd.DataFrame: A DataFrame containing the scraped data with columns including
+                    publication date, title, URL, reading time minutes, tags, reaction
+                    and comment counts, ranking, topic, trending period and comments.
     """
 
     url = BASE_URL
@@ -32,8 +30,9 @@ def scrape_top_articles(topic="all", trending_period="week", top_n=10):
         url += f"/t/{topic}"
     url += f"/top/{trending_period}"
 
-
+    articles_data = []
     metadata_list = []
+    scraped_urls = set()
 
     # Start scraping
     with sync_playwright() as p:
@@ -42,8 +41,10 @@ def scrape_top_articles(topic="all", trending_period="week", top_n=10):
         # Default context (user-agent) for the main page
         main_context = browser.new_context()
         page = main_context.new_page()
-        page.goto(url, timeout=60000)
+        page.goto(url, timeout=10000)
         page.wait_for_load_state("networkidle")
+        print(f"Starting scraper to retrieve the top {top_n} DEV.to articles "
+              f"for topic/tag '{topic}' and trending period '{trending_period}'")
 
         # Infinite scroll to load top_n articles
         articles = page.query_selector_all("article.crayons-story")
@@ -64,6 +65,12 @@ def scrape_top_articles(topic="all", trending_period="week", top_n=10):
         for article in top_articles:
             try:
                 metadata = extract_article_metadata(article)
+                article_url = metadata.get("href")
+                # Skip already scraped articles
+                if article_url in scraped_urls:
+                    print(f"Skipping article already scraped: {article_url}")
+                    continue
+                scraped_urls.add(article_url)
                 metadata_list.append(metadata)
             except Exception as e:
                 print(f"Error extracting metadata from an article: {e}")
@@ -71,6 +78,44 @@ def scrape_top_articles(topic="all", trending_period="week", top_n=10):
         # Close main context
         main_context.close()
 
+        # Extract data for each article
+        current_context = None
+        for i, metadata in enumerate(metadata_list):
+            # Define maximum retry attempts for extraction in case of errors
+            max_attempts = 3
+            for attempt in range(0, max_attempts):
+                try:
+                    href = metadata.get("href")
+                    # Rotate user agent every 'rotate_every' articles.
+                    if i % rotate_every == 0:
+                        if current_context:
+                            current_context.close()
+                        current_context = browser.new_context(user_agent=random.choice(USER_AGENTS))
+
+                    # Scrape comments if the URL exists.
+                    comments = []
+                    if href:
+                        comments = scrape_comments(href, current_context)
+
+                    # Merge metadata with additional data.
+                    metadata["rank"] = i + 1
+                    metadata["topic"] = topic
+                    metadata["trending_period"] = trending_period
+                    metadata["comments"] = comments
+
+                    articles_data.append(metadata)
+                    print(f"Scraped article {i + 1}: {metadata.get('title')}")
+                    # Exit retry loop on success
+                    break
+                except Exception as e:
+                    if attempt == max_attempts:
+                        print(f"Error parsing article {i + 1} after {attempt + 1} attempts: {e}")
+                    else:
+                        print(f"Error parsing article {i + 1} on attempt {attempt + 1}: {e}")
+                        print("Retrying...")
+
+        if current_context:
+            current_context.close()
         browser.close()
 
-    return pd.DataFrame(metadata_list)
+    return pd.DataFrame(articles_data)
