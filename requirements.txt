@@ -10,3 +10,6 @@ six==1.17.0
 soupsieve==2.6
 typing_extensions==4.13.0
 tzdata==2025.2
+
+matplotlib~=3.9.4
+seaborn~=0.13.2
