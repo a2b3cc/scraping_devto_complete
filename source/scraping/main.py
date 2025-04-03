@@ -11,7 +11,7 @@ def main():
     df_list = []
     for topic in TOPICS:
         for trending_period in TRENDING_PERIODS:
-            df_topic = scrape_top_articles(topic, trending_period, 6)
+            df_topic = scrape_top_articles(topic, trending_period, 50)
             df_list.append(df_topic)
 
     # Concatenate all the dataframes
@@ -25,7 +25,7 @@ def main():
     filename = dataset_dir / f"devto_data_{now}.csv"
     # Export as CSV
     df.to_csv(filename, index=False)
-    print(f"Successfully exported DEV.to scraped data to CSV in: {filename}")
+    print(f"Successfully exported {df.shape[0]} DEV.to articles to CSV in: {filename}")
 
 
 if __name__ == "__main__":
