@@ -13,5 +13,5 @@ USER_AGENTS = [
 
 TOPICS = ["all", "ai", "machinelearning", "datascience", "python", "cloud",
           "frontend", "webdev", "javascript", "news", "devops", "opensource"]
-TRENDING_PERIODS = ["year", "month", "week", "day"]
+TRENDING_PERIODS = ["infinity", "year", "month", "week", "day"]
 BASE_URL = "https://dev.to"

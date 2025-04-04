@@ -89,6 +89,13 @@ def plot_metrics_by_group(df: pd.DataFrame, group_by: str):
     labels = ["Reading Minutes", "Number of Reactions", "Number of Comments"]
     # Compute average metrics
     avg_metrics = df.groupby(group_by)[list(metrics_colors.keys())].mean().reset_index()
+    print("AVG METRICS")
+    print(avg_metrics)
+    outliers = df.loc[
+        (df["reaction_count"] > 1000) & (df["trending_period"] == "day"),
+        ["topic", "title", "trending_period", "reaction_count"]]
+    pd.set_option('display.max_columns', None)
+    print(outliers.tail())
 
     # Distribute the groups on the y axis
     groups = avg_metrics[group_by]
@@ -120,7 +127,7 @@ def plot_metrics_by_group(df: pd.DataFrame, group_by: str):
     plt.tight_layout(rect=[0, 0, 1, 0.95])
 
     # Export figure
-    export_fig(fig, f"DEVto_metrics_by_{title}.png")
+    export_fig(fig, f"DEVto_metrics_by_{group_by}.png")
 
 
 def plot_tags_treemap_for_topic(tag_counts_topic: pd.Series, topic: str,
