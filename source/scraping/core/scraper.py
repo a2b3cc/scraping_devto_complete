@@ -24,12 +24,14 @@ def scrape_top_articles(topic="all", trending_period="week", top_n=10,  rotate_e
                     publication date, title, URL, reading time minutes, tags, reaction
                     and comment counts, ranking, topic, trending period and comments.
     """
-
+    # Construct the URL based on topic and trending period
     url = BASE_URL
     if topic != "all":
         url += f"/t/{topic}"
-    url += f"/top/{trending_period}"
+    if trending_period != "day":
+        url += f"/top/{trending_period}"
 
+    # Initialize variables
     articles_data = []
     metadata_list = []
     scraped_urls = set()
@@ -38,10 +40,11 @@ def scrape_top_articles(topic="all", trending_period="week", top_n=10,  rotate_e
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
 
-        # Default context (user-agent) for the main page
+        # Default user-agent context for the main page
         main_context = browser.new_context()
         page = main_context.new_page()
         page.goto(url, timeout=10000)
+        # Wait for dynamic content to load (until network is almost idle)
         page.wait_for_load_state("networkidle")
         print(f"Starting scraper to retrieve the top {top_n} DEV.to articles "
               f"for topic/tag '{topic}' and trending period '{trending_period}'")
