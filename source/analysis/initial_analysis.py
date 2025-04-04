@@ -127,7 +127,7 @@ def plot_metrics_by_group(df: pd.DataFrame, group_by: str):
     plt.tight_layout(rect=[0, 0, 1, 0.95])
 
     # Export figure
-    export_fig(fig, f"DEVto_metrics_by_{title}.png")
+    export_fig(fig, f"DEVto_metrics_by_{group_by}.png")
 
 
 def plot_tags_treemap_for_topic(tag_counts_topic: pd.Series, topic: str,
