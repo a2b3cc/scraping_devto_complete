@@ -10,26 +10,63 @@ import squarify
 import numpy as np
 from config import EXPORT_IMAGE_DIR
 
-def load_latest_data():
+# Global variable to store the dataset name used
+DATASET_NAME = None
+
+def get_latest_csv_files():
     """
-    Loads the latest CSV in the dataset/ path.
+    Returns the latest CSV file from the dataset/ directory.
     Returns:
-        pd.DataFrame
+        Path: latest CSV file path.
     """
     # Get the latest CSV dataset
+    global DATASET_NAME
     base_dir = Path(__file__).resolve().parent.parent.parent
     data_dir = base_dir / "dataset"
     csv_files = sorted(data_dir.glob("devto_data_*.csv"))
+    latest_file = csv_files[-1] if csv_files else None
+    if latest_file:
+        DATASET_NAME = latest_file.stem
+    return latest_file
 
-    if not csv_files:
+
+def load_chunks(chunksize: int = 1000):
+    """
+    Yields processed chunks from the CSV file.
+
+    Args:
+        chunksize: number of rows per chunk.
+
+    Returns:
+        pd.DataFrame: processed chunk
+    """
+
+    latest_file = get_latest_csv_files()
+    if not latest_file:
         print("No CSV files found")
         return pd.DataFrame()
-    else:
-        latest_file = csv_files[-1]
-        df = pd.read_csv(latest_file)
-        df["tags"] = df["tags"].apply(ast.literal_eval)
-        df["comments"] = df["comments"].apply(ast.literal_eval)
-        return df
+    # Load CSV chunk
+    print(f"Loading dataset: {latest_file}")
+    reader = pd.read_csv(latest_file, chunksize=chunksize,
+                         converters={
+                             "tags": ast.literal_eval,
+                             "comments": ast.literal_eval
+                         })
+    for chunk in reader:
+        yield chunk
+
+
+def load_latest_data(chunksize: int = 1000):
+    """
+    Lazily loads the latest CSV in the dataset/ path.
+    Args:
+        chunksize: number of rows per chunk.
+    Returns:
+        pd.DataFrame
+    """
+    chunks = list(load_chunks())
+    return pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+
 
 def print_summary(df: pd.DataFrame):
     """"
@@ -58,10 +95,12 @@ def export_fig(fig, filename: str, dpi: int = 300):
         None
     """
     # Export to path
-    export_dir = Path(__file__).resolve().parent / EXPORT_IMAGE_DIR
+    dataset_name = DATASET_NAME if DATASET_NAME else "default"
+    export_dir = Path(__file__).resolve().parent / EXPORT_IMAGE_DIR / dataset_name
     export_dir.mkdir(parents=True, exist_ok=True)
     file_dir = export_dir / filename
     fig.savefig(file_dir, dpi=300)
+    print(f"Exported plot '{filename}'")
 
 
 def plot_metrics_by_group(df: pd.DataFrame, group_by: str):
@@ -91,11 +130,6 @@ def plot_metrics_by_group(df: pd.DataFrame, group_by: str):
     avg_metrics = df.groupby(group_by)[list(metrics_colors.keys())].mean().reset_index()
     print("AVG METRICS")
     print(avg_metrics)
-    outliers = df.loc[
-        (df["reaction_count"] > 1000) & (df["trending_period"] == "day"),
-        ["topic", "title", "trending_period", "reaction_count"]]
-    pd.set_option('display.max_columns', None)
-    print(outliers.tail())
 
     # Distribute the groups on the y axis
     groups = avg_metrics[group_by]
@@ -108,6 +142,8 @@ def plot_metrics_by_group(df: pd.DataFrame, group_by: str):
     for ax, (metric, color), label in zip(axs, metrics_colors.items(), labels):
         ax.barh(y_coords, avg_metrics[metric], color=color, label=label)
         ax.set_title(label, color=color)
+        ax.xaxis.label.set_color(color)
+        ax.tick_params(axis="x", colors=color)
 
     # Remove ticks and spines for a cleaner graph
     for i, ax in enumerate(axs):
