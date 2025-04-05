@@ -65,10 +65,11 @@ def scrape_top_articles(topic="all", trending_period="week", top_n=10,  rotate_e
         top_articles = articles[:top_n]
 
         # Extract metadata from each article
-        for article in top_articles:
+        for i, article in enumerate(top_articles):
             try:
                 metadata = extract_article_metadata(article)
                 article_url = metadata.get("href")
+                print(f"Scraped metadata of article {i + 1}: {metadata.get('title')}")
                 # Skip already scraped articles
                 if article_url in scraped_urls:
                     print(f"Skipping article already scraped: {article_url}")
@@ -107,7 +108,7 @@ def scrape_top_articles(topic="all", trending_period="week", top_n=10,  rotate_e
                     metadata["comments"] = comments
 
                     articles_data.append(metadata)
-                    print(f"Scraped article {i + 1}: {metadata.get('title')}")
+                    print(f"Scraped comments of article {i + 1}: {metadata.get('title')}")
                     # Exit retry loop on success
                     break
                 except Exception as e:
